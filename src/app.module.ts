@@ -1,39 +1,35 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
-
-// Config
 import databaseConfig from './config/database.config';
 import jwtConfig from './config/jwt.config';
-
-// Common
-import { TransformInterceptor } from './common/interceptors/transform.interceptor';
-import { AllExceptionsFilter } from './common/filters/http-exception.filter';
+import { AuthModule } from './modules/auth/auth.module';
+import { UsersModule } from './modules/users/users.module';
+import { CategoriesModule } from './modules/categories/categories.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       load: [databaseConfig, jwtConfig],
+      envFilePath: '.env',
     }),
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
-      useFactory: (configService: ConfigService) =>
-        configService.get('database'),
+      useFactory: (configService: ConfigService) => {
+        const dbConfig = configService.get('database');
+        if (!dbConfig) {
+          throw new Error('Database configuration not found');
+        }
+        return dbConfig;
+      },
       inject: [ConfigService],
     }),
-    // Modules will be added here
+    AuthModule,
+    UsersModule,
+    CategoriesModule,
   ],
-  providers: [
-    {
-      provide: APP_INTERCEPTOR,
-      useClass: TransformInterceptor,
-    },
-    {
-      provide: APP_FILTER,
-      useClass: AllExceptionsFilter,
-    },
-  ],
+  controllers: [],
+  providers: [],
 })
 export class AppModule { }
