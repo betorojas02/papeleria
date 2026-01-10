@@ -6,6 +6,10 @@ import jwtConfig from './config/jwt.config';
 import { AuthModule } from './modules/auth/auth.module';
 import { UsersModule } from './modules/users/users.module';
 import { CategoriesModule } from './modules/categories/categories.module';
+import { BrandsModule } from './modules/brands/brands.module';
+import { SuppliersModule } from './modules/suppliers/suppliers.module';
+import { CustomersModule } from './modules/customers/customers.module';
+import { ProductsModule } from './modules/products/products.module';
 
 @Module({
   imports: [
@@ -28,6 +32,10 @@ import { CategoriesModule } from './modules/categories/categories.module';
     AuthModule,
     UsersModule,
     CategoriesModule,
+    BrandsModule,
+    SuppliersModule,
+    CustomersModule,
+    ProductsModule,
   ],
   controllers: [],
   providers: [],
