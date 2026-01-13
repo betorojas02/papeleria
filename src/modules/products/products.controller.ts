@@ -83,6 +83,38 @@ export class ProductsController {
         );
     }
 
+    @Get('category/:categoryId')
+    @Roles(UserRole.ADMIN, UserRole.EMPLOYEE, UserRole.CASHIER)
+    @ApiOperation({ summary: 'Get products by category' })
+    @SwaggerResponse({
+        status: 200,
+        description: 'List of products in category',
+        type: [ProductResponseDto],
+    })
+    async findByCategory(@Param('categoryId') categoryId: string) {
+        const products = await this.productsService.findByCategory(categoryId);
+        return ApiResponse.success(
+            plainToInstance(ProductResponseDto, products),
+            'Products by category retrieved successfully',
+        );
+    }
+
+    @Get('brand/:brandId')
+    @Roles(UserRole.ADMIN, UserRole.EMPLOYEE, UserRole.CASHIER)
+    @ApiOperation({ summary: 'Get products by brand' })
+    @SwaggerResponse({
+        status: 200,
+        description: 'List of products by brand',
+        type: [ProductResponseDto],
+    })
+    async findByBrand(@Param('brandId') brandId: string) {
+        const products = await this.productsService.findByBrand(brandId);
+        return ApiResponse.success(
+            plainToInstance(ProductResponseDto, products),
+            'Products by brand retrieved successfully',
+        );
+    }
+
     @Get(':id')
     @Roles(UserRole.ADMIN, UserRole.EMPLOYEE, UserRole.CASHIER)
     @ApiOperation({ summary: 'Get product by ID' })

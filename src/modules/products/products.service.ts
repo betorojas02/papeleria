@@ -53,6 +53,22 @@ export class ProductsService {
         });
     }
 
+    async findByCategory(categoryId: string): Promise<Product[]> {
+        return this.productsRepository.find({
+            where: { categoryId },
+            relations: ['category', 'brand'],
+            order: { name: 'ASC' },
+        });
+    }
+
+    async findByBrand(brandId: string): Promise<Product[]> {
+        return this.productsRepository.find({
+            where: { brandId },
+            relations: ['category', 'brand'],
+            order: { name: 'ASC' },
+        });
+    }
+
     async findOne(id: string): Promise<Product> {
         const product = await this.productsRepository.findOne({
             where: { id },

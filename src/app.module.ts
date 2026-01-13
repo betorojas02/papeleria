@@ -10,6 +10,9 @@ import { BrandsModule } from './modules/brands/brands.module';
 import { SuppliersModule } from './modules/suppliers/suppliers.module';
 import { CustomersModule } from './modules/customers/customers.module';
 import { ProductsModule } from './modules/products/products.module';
+import { CashRegistersModule } from './modules/cash-registers/cash-registers.module';
+import { PurchasesModule } from './modules/purchases/purchases.module';
+import { SalesModule } from './modules/sales/sales.module';
 
 @Module({
   imports: [
@@ -36,6 +39,9 @@ import { ProductsModule } from './modules/products/products.module';
     SuppliersModule,
     CustomersModule,
     ProductsModule,
+    CashRegistersModule,
+    PurchasesModule,
+    SalesModule,
   ],
   controllers: [],
   providers: [],

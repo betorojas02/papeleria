@@ -1,0 +1,235 @@
+// Código para dbdiagram.io
+// Copia y pega esto en https://dbdiagram.io
+
+Table users {
+  id uuid [pk]
+  first_name varchar(255) [not null]
+  last_name varchar(255) [not null]
+  email varchar(255) [unique, not null]
+  password varchar(255) [not null]
+  role varchar(50) [not null, default: 'employee']
+  is_active boolean [default: true]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  deleted_at timestamp [null]
+  
+  indexes {
+    email
+    role
+    deleted_at
+  }
+}
+
+Table categories {
+  id uuid [pk]
+  name varchar(255) [unique, not null]
+  description text [null]
+  is_active boolean [default: true]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  deleted_at timestamp [null]
+  
+  indexes {
+    name
+    deleted_at
+  }
+}
+
+Table brands {
+  id uuid [pk]
+  name varchar(255) [unique, not null]
+  description text [null]
+  is_active boolean [default: true]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  deleted_at timestamp [null]
+  
+  indexes {
+    name
+    deleted_at
+  }
+}
+
+Table suppliers {
+  id uuid [pk]
+  name varchar(255) [not null]
+  tax_id varchar(50) [unique, not null]
+  email varchar(255) [null]
+  phone varchar(50) [null]
+  address text [null]
+  is_active boolean [default: true]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  deleted_at timestamp [null]
+  
+  indexes {
+    tax_id
+    deleted_at
+  }
+}
+
+Table customers {
+  id uuid [pk]
+  first_name varchar(255) [not null]
+  last_name varchar(255) [not null]
+  email varchar(255) [unique, null]
+  phone varchar(50) [null]
+  address text [null]
+  document_number varchar(50) [null]
+  document_type varchar(20) [null]
+  is_active boolean [default: true]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  deleted_at timestamp [null]
+  
+  indexes {
+    email
+    deleted_at
+  }
+}
+
+Table products {
+  id uuid [pk]
+  name varchar(255) [not null]
+  description text [null]
+  price decimal(10,2) [not null]
+  cost decimal(10,2) [null]
+  stock integer [default: 0]
+  min_stock integer [default: 10]
+  barcode varchar(255) [unique, null]
+  sku varchar(255) [unique, null]
+  type varchar(20) [default: 'physical']
+  is_active boolean [default: true]
+  category_id uuid [not null, ref: > categories.id]
+  brand_id uuid [null, ref: > brands.id]
+  supplier_id uuid [null, ref: > suppliers.id]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  deleted_at timestamp [null]
+  
+  indexes {
+    barcode
+    sku
+    category_id
+    brand_id
+    stock
+    deleted_at
+  }
+}
+
+Table cash_registers {
+  id uuid [pk]
+  opening_amount decimal(10,2) [not null]
+  closing_amount decimal(10,2) [null]
+  status varchar(20) [default: 'open']
+  opened_at timestamp [default: `now()`]
+  closed_at timestamp [null]
+  user_id uuid [not null, ref: > users.id]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  deleted_at timestamp [null]
+  
+  indexes {
+    user_id
+    status
+    deleted_at
+  }
+}
+
+Table purchases {
+  id uuid [pk]
+  total decimal(10,2) [not null]
+  invoice_number varchar(255) [null]
+  purchase_date timestamp [default: `now()`]
+  supplier_id uuid [not null, ref: > suppliers.id]
+  user_id uuid [not null, ref: > users.id]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  deleted_at timestamp [null]
+  
+  indexes {
+    supplier_id
+    user_id
+    purchase_date
+    deleted_at
+  }
+}
+
+Table purchase_details {
+  id uuid [pk]
+  quantity integer [not null]
+  unit_cost decimal(10,2) [not null]
+  subtotal decimal(10,2) [not null]
+  purchase_id uuid [not null, ref: > purchases.id]
+  product_id uuid [not null, ref: > products.id]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  deleted_at timestamp [null]
+  
+  indexes {
+    purchase_id
+    product_id
+    deleted_at
+  }
+}
+
+Table sales {
+  id uuid [pk]
+  total decimal(10,2) [not null]
+  discount decimal(10,2) [default: 0]
+  tax_amount decimal(10,2) [default: 0]
+  status varchar(20) [default: 'completed']
+  notes text [null]
+  invoice_number varchar(255) [null]
+  user_id uuid [not null, ref: > users.id]
+  customer_id uuid [null, ref: > customers.id]
+  cash_register_id uuid [null, ref: > cash_registers.id]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  deleted_at timestamp [null]
+  
+  indexes {
+    user_id
+    customer_id
+    cash_register_id
+    created_at
+    deleted_at
+  }
+}
+
+Table sale_items {
+  id uuid [pk]
+  quantity integer [not null]
+  unit_price decimal(10,2) [not null]
+  subtotal decimal(10,2) [not null]
+  sale_id uuid [not null, ref: > sales.id]
+  product_id uuid [not null, ref: > products.id]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  deleted_at timestamp [null]
+  
+  indexes {
+    sale_id
+    product_id
+    deleted_at
+  }
+}
+
+Table sale_payments {
+  id uuid [pk]
+  payment_method varchar(20) [not null]
+  amount decimal(10,2) [not null]
+  voucher_number varchar(255) [null]
+  reference_number varchar(255) [null]
+  notes text [null]
+  sale_id uuid [not null, ref: > sales.id]
+  created_at timestamp [default: `now()`]
+  updated_at timestamp [default: `now()`]
+  deleted_at timestamp [null]
+  
+  indexes {
+    sale_id
+    payment_method
+    deleted_at
+  }
+}
