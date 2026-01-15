@@ -8,6 +8,7 @@ import {
     UseGuards,
     UseInterceptors,
     ClassSerializerInterceptor,
+    Query,
 } from '@nestjs/common';
 import {
     ApiTags,
@@ -56,10 +57,14 @@ export class PurchasesController {
         description: 'List of purchases',
         type: [PurchaseResponseDto],
     })
-    async findAll() {
-        const purchases = await this.purchasesService.findAll();
+    async findAll(
+        @Query('page') page: number = 1,
+        @Query('limit') limit: number = 10,
+        @Query('search') search?: string,
+    ) {
+        const result = await this.purchasesService.findAll(page, limit, search);
         return ApiResponse.success(
-            plainToInstance(PurchaseResponseDto, purchases),
+            result,
             'Purchases retrieved successfully',
         );
     }

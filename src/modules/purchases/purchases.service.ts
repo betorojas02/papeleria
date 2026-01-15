@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, ILike } from 'typeorm';
 import { CreatePurchaseDto } from './dto/create-purchase.dto';
 import { UpdatePurchaseDto } from './dto/update-purchase.dto';
 import { Purchase } from '../../database/entities/purchase.entity';
@@ -77,11 +77,35 @@ export class PurchasesService {
         }
     }
 
-    async findAll(): Promise<Purchase[]> {
-        return this.purchasesRepository.find({
+    async findAll(page: number = 1, limit: number = 10, search?: string) {
+        const take = limit || 10;
+        const skip = (page - 1) * take;
+
+        const where: any = {}; // Using any to simplify dynamic relation query construction validation
+
+        if (search) {
+            where['invoiceNumber'] = ILike(`%${search}%`);
+            // Note: Searching deeply in relations with FindOptions can be limited depending on TypeORM version.
+            // For simple implementation we search invoice. 
+            // If more complex search is needed, QueryBuilder is better.
+        }
+
+        const [items, total] = await this.purchasesRepository.findAndCount({
+            where,
             relations: ['supplier', 'user', 'details', 'details.product'],
             order: { purchaseDate: 'DESC' },
+            take,
+            skip,
         });
+
+        return {
+            data: items,
+            meta: {
+                total,
+                page,
+                lastPage: Math.ceil(total / take),
+            },
+        };
     }
 
     async findOne(id: string): Promise<Purchase> {

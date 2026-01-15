@@ -9,6 +9,7 @@ import {
     UseGuards,
     UseInterceptors,
     ClassSerializerInterceptor,
+    Query,
 } from '@nestjs/common';
 import {
     ApiTags,
@@ -53,16 +54,20 @@ export class ProductsController {
 
     @Get()
     @Roles(UserRole.ADMIN, UserRole.EMPLOYEE, UserRole.CASHIER)
-    @ApiOperation({ summary: 'Get all products' })
+    @ApiOperation({ summary: 'Get all products with pagination' })
     @SwaggerResponse({
         status: 200,
         description: 'List of products',
         type: [ProductResponseDto],
     })
-    async findAll() {
-        const products = await this.productsService.findAll();
+    async findAll(
+        @Query('page') page: number = 1,
+        @Query('limit') limit: number = 10,
+        @Query('search') search?: string,
+    ) {
+        const result = await this.productsService.findAll(page, limit, search);
         return ApiResponse.success(
-            plainToInstance(ProductResponseDto, products),
+            result,
             'Products retrieved successfully',
         );
     }

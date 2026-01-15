@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource } from 'typeorm';
+import { Repository, DataSource, ILike, Between, Brackets } from 'typeorm';
 import { CreateSaleDto } from './dto/create-sale.dto';
 import { UpdateSaleDto } from './dto/update-sale.dto';
 import { Sale } from '../../database/entities/sale.entity';
@@ -117,11 +117,49 @@ export class SalesService {
         }
     }
 
-    async findAll(): Promise<Sale[]> {
-        return this.salesRepository.find({
-            relations: ['customer', 'user', 'items', 'items.product', 'payments'],
-            order: { createdAt: 'DESC' },
-        });
+    async findAll(page: number = 1, limit: number = 10, search?: string, date?: string) {
+        const take = limit || 10;
+        const skip = (page - 1) * take;
+
+        const query = this.salesRepository.createQueryBuilder('sale')
+            .leftJoinAndSelect('sale.customer', 'customer')
+            .leftJoinAndSelect('sale.user', 'user')
+            .leftJoinAndSelect('sale.items', 'items')
+            .leftJoinAndSelect('items.product', 'product')
+            .leftJoinAndSelect('sale.payments', 'payments')
+            .orderBy('sale.createdAt', 'DESC')
+            .skip(skip)
+            .take(take);
+
+        if (date) {
+            // Create range for the entire day (Local/Server time interpretation of input)
+            const startDate = new Date(date);
+            startDate.setHours(0, 0, 0, 0);
+
+            const endDate = new Date(date);
+            endDate.setHours(23, 59, 59, 999);
+
+            query.andWhere('sale.createdAt BETWEEN :start AND :end', { start: startDate, end: endDate });
+        }
+
+        if (search) {
+            query.andWhere(new Brackets(qb => {
+                qb.where('customer.firstName ILIKE :search', { search: `%${search}%` })
+                    .orWhere('customer.lastName ILIKE :search', { search: `%${search}%` })
+                    .orWhere('sale.id::text ILIKE :search', { search: `%${search}%` }); // Optional: Search by ID too
+            }));
+        }
+
+        const [items, total] = await query.getManyAndCount();
+
+        return {
+            data: items,
+            meta: {
+                total,
+                page,
+                lastPage: Math.ceil(total / take),
+            },
+        };
     }
 
     async findOne(id: string): Promise<Sale> {

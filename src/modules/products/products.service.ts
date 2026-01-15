@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, FindOptionsWhere, ILike } from 'typeorm';
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { Product, ProductType } from '../../database/entities/product.entity';
@@ -46,11 +46,31 @@ export class ProductsService {
         return this.productsRepository.save(product);
     }
 
-    async findAll(): Promise<Product[]> {
-        return this.productsRepository.find({
+    async findAll(page: number = 1, limit: number = 10, search?: string) {
+        const take = limit || 10;
+        const skip = (page - 1) * take;
+
+        const where: FindOptionsWhere<Product>[] | FindOptionsWhere<Product> = search ? [
+            { name: ILike(`%${search}%`) },
+            { sku: ILike(`%${search}%`) }
+        ] : {};
+
+        const [items, total] = await this.productsRepository.findAndCount({
+            where,
             relations: ['category', 'brand'],
             order: { name: 'ASC' },
+            take,
+            skip,
         });
+
+        return {
+            data: items,
+            meta: {
+                total,
+                page,
+                lastPage: Math.ceil(total / take),
+            },
+        };
     }
 
     async findByCategory(categoryId: string): Promise<Product[]> {
