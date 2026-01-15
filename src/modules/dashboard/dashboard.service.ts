@@ -116,15 +116,22 @@ export class DashboardService {
 
     async getSalesChart(startDate?: string, endDate?: string) {
         try {
-            let start = startDate ? new Date(startDate) : new Date();
-            let end = endDate ? new Date(endDate) : new Date();
+            let start: Date;
+            let end: Date;
 
-            // Default to last 7 days if no dates provided
-            if (!startDate || !endDate) {
-                end = new Date(); // Reset to now
-                start = new Date();
-                start.setDate(end.getDate() - 7);
-                end.setHours(23, 59, 59, 999);
+            if (startDate) {
+                start = fromZonedTime(`${startDate} 00:00:00`, APP_TIMEZONE);
+            } else {
+                // Default to 7 days ago
+                const now = new Date();
+                start = new Date(now);
+                start.setDate(now.getDate() - 7);
+            }
+
+            if (endDate) {
+                end = fromZonedTime(`${endDate} 23:59:59.999`, APP_TIMEZONE);
+            } else {
+                end = new Date();
             }
 
             const sales = await this.salesRepository
@@ -155,9 +162,8 @@ export class DashboardService {
 
     async getTopProducts(limit: number = 5, startDate?: string, endDate?: string) {
         try {
-            const start = startDate ? new Date(startDate) : new Date(0);
-            const end = endDate ? new Date(endDate) : new Date();
-            if (!endDate) end.setHours(23, 59, 59, 999);
+            const start = startDate ? fromZonedTime(`${startDate} 00:00:00`, APP_TIMEZONE) : new Date(0);
+            const end = endDate ? fromZonedTime(`${endDate} 23:59:59.999`, APP_TIMEZONE) : new Date();
 
             const topProducts = await this.saleItemsRepository
                 .createQueryBuilder('saleItem')
@@ -190,9 +196,8 @@ export class DashboardService {
 
     async getSalesByCategory(startDate?: string, endDate?: string) {
         try {
-            const start = startDate ? new Date(startDate) : new Date(0);
-            const end = endDate ? new Date(endDate) : new Date();
-            if (!endDate) end.setHours(23, 59, 59, 999);
+            const start = startDate ? fromZonedTime(`${startDate} 00:00:00`, APP_TIMEZONE) : new Date(0);
+            const end = endDate ? fromZonedTime(`${endDate} 23:59:59.999`, APP_TIMEZONE) : new Date();
 
             const salesByCategory = await this.saleItemsRepository
                 .createQueryBuilder('saleItem')
@@ -229,9 +234,8 @@ export class DashboardService {
             const where: any = {};
 
             if (startDate && endDate) {
-                const start = new Date(startDate);
-                const end = new Date(endDate);
-                // Trust frontend timestamp
+                const start = fromZonedTime(`${startDate} 00:00:00`, APP_TIMEZONE);
+                const end = fromZonedTime(`${endDate} 23:59:59.999`, APP_TIMEZONE);
                 where.createdAt = Between(start, end);
             }
 
@@ -256,9 +260,8 @@ export class DashboardService {
      */
     async getTopItems(limit: number = 10, startDate?: string, endDate?: string) {
         try {
-            const start = startDate ? new Date(startDate) : new Date(0);
-            const end = endDate ? new Date(endDate) : new Date();
-            if (!endDate) end.setHours(23, 59, 59, 999);
+            const start = startDate ? fromZonedTime(`${startDate} 00:00:00`, APP_TIMEZONE) : new Date(0);
+            const end = endDate ? fromZonedTime(`${endDate} 23:59:59.999`, APP_TIMEZONE) : new Date();
 
             // Get top products
             const topProducts = await this.saleItemsRepository
@@ -320,9 +323,8 @@ export class DashboardService {
      */
     async getItemsBreakdown(startDate?: string, endDate?: string) {
         try {
-            const start = startDate ? new Date(startDate) : new Date(0);
-            const end = endDate ? new Date(endDate) : new Date();
-            if (!endDate) end.setHours(23, 59, 59, 999);
+            const start = startDate ? fromZonedTime(`${startDate} 00:00:00`, APP_TIMEZONE) : new Date(0);
+            const end = endDate ? fromZonedTime(`${endDate} 23:59:59.999`, APP_TIMEZONE) : new Date();
 
             const breakdown = await this.saleItemsRepository
                 .createQueryBuilder('saleItem')
