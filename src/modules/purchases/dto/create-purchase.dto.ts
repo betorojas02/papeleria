@@ -7,16 +7,16 @@ export class PurchaseDetailDto {
         description: 'Product ID',
         example: 'uuid',
     })
-    @IsUUID()
-    @IsNotEmpty()
+    @IsUUID('4', { message: 'El ID del producto debe ser un UUID válido' })
+    @IsNotEmpty({ message: 'El producto es obligatorio' })
     productId: string;
 
     @ApiProperty({
         description: 'Quantity purchased',
         example: 50,
     })
-    @IsNumber()
-    @Min(1)
+    @IsNumber({}, { message: 'La cantidad debe ser un número' })
+    @Min(1, { message: 'La cantidad mínima es 1' })
     @Type(() => Number)
     quantity: number;
 
@@ -24,8 +24,8 @@ export class PurchaseDetailDto {
         description: 'Unit cost',
         example: 3000,
     })
-    @IsNumber()
-    @Min(0)
+    @IsNumber({}, { message: 'El costo unitario debe ser un número' })
+    @Min(0, { message: 'El costo no puede ser negativo' })
     @Type(() => Number)
     unitCost: number;
 }
@@ -35,16 +35,16 @@ export class CreatePurchaseDto {
         description: 'Supplier ID',
         example: 'uuid',
     })
-    @IsUUID()
-    @IsNotEmpty()
+    @IsUUID('4', { message: 'El ID del proveedor debe ser un UUID válido' })
+    @IsNotEmpty({ message: 'El proveedor es obligatorio' })
     supplierId: string;
 
     @ApiProperty({
         description: 'User ID who registers the purchase',
         example: 'uuid',
     })
-    @IsUUID()
-    @IsNotEmpty()
+    @IsUUID('4', { message: 'El ID del usuario debe ser un UUID válido' })
+    @IsNotEmpty({ message: 'El usuario es obligatorio' })
     userId: string;
 
     @ApiProperty({
@@ -52,7 +52,7 @@ export class CreatePurchaseDto {
         example: 'FAC-001',
         required: false,
     })
-    @IsString()
+    @IsString({ message: 'El número de factura debe ser texto' })
     @IsOptional()
     invoiceNumber?: string;
 
@@ -60,7 +60,7 @@ export class CreatePurchaseDto {
         description: 'Purchase details',
         type: [PurchaseDetailDto],
     })
-    @IsArray()
+    @IsArray({ message: 'Los detalles deben ser una lista' })
     @ValidateNested({ each: true })
     @Type(() => PurchaseDetailDto)
     details: PurchaseDetailDto[];

@@ -4,6 +4,7 @@ import { Repository, LessThanOrEqual, MoreThanOrEqual, Between } from 'typeorm';
 import { Sale } from '../../database/entities/sale.entity';
 import { Product } from '../../database/entities/product.entity';
 import { SaleItem } from '../../database/entities/sale-item.entity';
+import { Purchase } from '../../database/entities/purchase.entity';
 
 @Injectable()
 export class DashboardService {
@@ -14,6 +15,8 @@ export class DashboardService {
         private productsRepository: Repository<Product>,
         @InjectRepository(SaleItem)
         private saleItemsRepository: Repository<SaleItem>,
+        @InjectRepository(Purchase)
+        private purchasesRepository: Repository<Purchase>,
     ) { }
 
     async getStats(startDate?: string, endDate?: string) {
@@ -54,11 +57,22 @@ export class DashboardService {
                 }),
             ]);
 
-            const totalRevenue = await this.salesRepository
+            const totalRevenueResult = await this.salesRepository
                 .createQueryBuilder('sale')
                 .select('SUM(sale.total)', 'total')
                 .where('sale.createdAt BETWEEN :start AND :end', { start, end })
                 .getRawOne();
+
+            const totalRevenue = parseFloat(totalRevenueResult?.total || '0');
+
+            const totalExpensesResult = await this.purchasesRepository
+                .createQueryBuilder('purchase')
+                .select('SUM(purchase.total)', 'total')
+                .where('purchase.purchaseDate BETWEEN :start AND :end', { start, end })
+                .getRawOne();
+
+            const totalExpenses = parseFloat(totalExpensesResult?.total || '0');
+            const netProfit = totalRevenue - totalExpenses;
 
             const todayRevenue = await this.salesRepository
                 .createQueryBuilder('sale')
@@ -68,7 +82,9 @@ export class DashboardService {
 
             return {
                 totalSales,
-                totalRevenue: parseFloat(totalRevenue?.total || '0'),
+                totalRevenue,
+                totalExpenses,
+                netProfit,
                 totalProducts,
                 lowStockProducts,
                 todaySales,

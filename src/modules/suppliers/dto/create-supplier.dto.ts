@@ -6,16 +6,16 @@ export class CreateSupplierDto {
         description: 'Supplier name',
         example: 'Distribuidora Escolar S.A.S',
     })
-    @IsString()
-    @IsNotEmpty()
+    @IsString({ message: 'El nombre debe ser una cadena de texto' })
+    @IsNotEmpty({ message: 'El nombre es obligatorio' })
     name: string;
 
     @ApiProperty({
         description: 'Tax ID (NIT)',
         example: '900123456-7',
     })
-    @IsString()
-    @IsNotEmpty()
+    @IsString({ message: 'El RUC/DNI debe ser una cadena de texto' })
+    @IsNotEmpty({ message: 'El RUC/DNI es obligatorio' })
     taxId: string;
 
     @ApiProperty({
@@ -23,7 +23,7 @@ export class CreateSupplierDto {
         example: 'ventas@distribuidora.com',
         required: false,
     })
-    @IsEmail()
+    @IsEmail({}, { message: 'El email debe tener un formato válido' })
     @IsOptional()
     email?: string;
 
@@ -32,7 +32,7 @@ export class CreateSupplierDto {
         example: '+57 300 1234567',
         required: false,
     })
-    @IsString()
+    @IsString({ message: 'El teléfono debe ser una cadena de texto' })
     @IsOptional()
     phone?: string;
 
@@ -41,7 +41,7 @@ export class CreateSupplierDto {
         example: 'Calle 123 #45-67, Bogotá',
         required: false,
     })
-    @IsString()
+    @IsString({ message: 'La dirección debe ser una cadena de texto' })
     @IsOptional()
     address?: string;
 
@@ -51,7 +51,7 @@ export class CreateSupplierDto {
         required: false,
         default: true,
     })
-    @IsBoolean()
+    @IsBoolean({ message: 'El estado debe ser booleano' })
     @IsOptional()
     isActive?: boolean;
 }
