@@ -1,6 +1,8 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, DataSource, ILike, Between, Brackets } from 'typeorm';
+import { fromZonedTime } from 'date-fns-tz';
+import { APP_TIMEZONE } from '../../common/constants/app.constants';
 import { CreateSaleDto } from './dto/create-sale.dto';
 import { UpdateSaleDto } from './dto/update-sale.dto';
 import { Sale } from '../../database/entities/sale.entity';
@@ -132,14 +134,15 @@ export class SalesService {
             .take(take);
 
         if (date) {
-            // Create range for the entire day (Local/Server time interpretation of input)
-            const startDate = new Date(date);
-            startDate.setHours(0, 0, 0, 0);
+            // "2026-01-14 00:00:00" in Bogota
+            const startOfDayBogota = `${date} 00:00:00`;
+            const startDateUtc = fromZonedTime(startOfDayBogota, APP_TIMEZONE);
 
-            const endDate = new Date(date);
-            endDate.setHours(23, 59, 59, 999);
+            // "2026-01-14 23:59:59.999" in Bogota
+            const endOfDayBogota = `${date} 23:59:59.999`;
+            const endDateUtc = fromZonedTime(endOfDayBogota, APP_TIMEZONE);
 
-            query.andWhere('sale.createdAt BETWEEN :start AND :end', { start: startDate, end: endDate });
+            query.andWhere('sale.createdAt BETWEEN :start AND :end', { start: startDateUtc, end: endDateUtc });
         }
 
         if (search) {

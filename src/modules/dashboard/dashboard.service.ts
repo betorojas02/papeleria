@@ -5,6 +5,8 @@ import { Sale } from '../../database/entities/sale.entity';
 import { Product } from '../../database/entities/product.entity';
 import { SaleItem } from '../../database/entities/sale-item.entity';
 import { Purchase } from '../../database/entities/purchase.entity';
+import { fromZonedTime } from 'date-fns-tz';
+import { APP_TIMEZONE } from '../../common/constants/app.constants';
 
 @Injectable()
 export class DashboardService {
@@ -21,16 +23,30 @@ export class DashboardService {
 
     async getStats(startDate?: string, endDate?: string) {
         try {
-            const start = startDate ? new Date(startDate) : new Date(0);
-            const end = endDate ? new Date(endDate) : new Date();
+            // Default: today in Bogota
+            // If no dates provided, we want stats for "today" or "all time" depending on requirement?
+            // Usually dashboard defaults to "Today" or "Last 30 days". 
+            // Existing code defaults: start=0, end=now.
 
-            // Only set end of day if NO endDate provided (default behavior)
-            if (!endDate) {
-                end.setHours(23, 59, 59, 999);
+            // Let's respect inputs as simplified YYYY-MM-DD
+
+            let start: Date;
+            let end: Date;
+
+            if (startDate) {
+                start = fromZonedTime(`${startDate} 00:00:00`, APP_TIMEZONE);
+            } else {
+                start = new Date(0); // Beginning of time
             }
 
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
+            if (endDate) {
+                end = fromZonedTime(`${endDate} 23:59:59.999`, APP_TIMEZONE);
+            } else {
+                end = new Date(); // Now
+            }
+
+            const todayBogota = new Date().toLocaleDateString('en-CA', { timeZone: APP_TIMEZONE }); // YYYY-MM-DD
+            const todayStart = fromZonedTime(`${todayBogota} 00:00:00`, APP_TIMEZONE);
 
             const [
                 totalSales,
@@ -52,7 +68,7 @@ export class DashboardService {
                 }),
                 this.salesRepository.count({
                     where: {
-                        createdAt: MoreThanOrEqual(today),
+                        createdAt: MoreThanOrEqual(todayStart),
                     },
                 }),
             ]);
@@ -77,7 +93,7 @@ export class DashboardService {
             const todayRevenue = await this.salesRepository
                 .createQueryBuilder('sale')
                 .select('SUM(sale.total)', 'total')
-                .where('sale.createdAt >= :today', { today })
+                .where('sale.createdAt >= :today', { today: todayStart })
                 .getRawOne();
 
             return {
