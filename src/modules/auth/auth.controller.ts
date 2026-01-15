@@ -5,6 +5,8 @@ import {
     Get,
     UseGuards,
     Request,
+    HttpCode,
+    HttpStatus,
 } from '@nestjs/common';
 import {
     ApiTags,
@@ -25,6 +27,7 @@ export class AuthController {
     constructor(private readonly authService: AuthService) { }
 
     @Post('login')
+    @HttpCode(HttpStatus.OK)
     @ApiOperation({ summary: 'Login user' })
     @SwaggerResponse({
         status: 200,

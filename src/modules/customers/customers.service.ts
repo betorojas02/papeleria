@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, Brackets } from 'typeorm';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 import { Customer } from '../../database/entities/customer.entity';
@@ -37,6 +37,18 @@ export class CustomersService {
         return this.customersRepository.find({
             order: { firstName: 'ASC', lastName: 'ASC' },
         });
+    }
+
+    async search(query: string): Promise<Customer[]> {
+        return this.customersRepository.createQueryBuilder('customer')
+            .where(new Brackets(qb => {
+                qb.where('LOWER(customer.firstName) LIKE LOWER(:query)', { query: `%${query}%` })
+                    .orWhere('LOWER(customer.lastName) LIKE LOWER(:query)', { query: `%${query}%` })
+                    .orWhere('LOWER(customer.documentNumber) LIKE LOWER(:query)', { query: `%${query}%` });
+            }))
+            .orderBy('customer.firstName', 'ASC')
+            .addOrderBy('customer.lastName', 'ASC')
+            .getMany();
     }
 
     async findOne(id: string): Promise<Customer> {

@@ -18,8 +18,11 @@ async function bootstrap() {
     }),
   );
 
-  // CORS
-  app.enableCors();
+  // CORS - Allow all origins (development)
+  app.enableCors({
+    origin: true,
+    credentials: true,
+  });
 
   // Swagger documentation
   if (process.env.SWAGGER_ENABLED === 'true') {

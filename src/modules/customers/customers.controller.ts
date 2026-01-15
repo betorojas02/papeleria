@@ -9,6 +9,7 @@ import {
     UseGuards,
     UseInterceptors,
     ClassSerializerInterceptor,
+    Query,
 } from '@nestjs/common';
 import {
     ApiTags,
@@ -61,6 +62,22 @@ export class CustomersController {
     })
     async findAll() {
         const customers = await this.customersService.findAll();
+        return ApiResponse.success(
+            plainToInstance(CustomerResponseDto, customers),
+            'Customers retrieved successfully',
+        );
+    }
+
+    @Get('search')
+    @Roles(UserRole.ADMIN, UserRole.EMPLOYEE, UserRole.CASHIER)
+    @ApiOperation({ summary: 'Search customers by name or document' })
+    @SwaggerResponse({
+        status: 200,
+        description: 'List of matching customers',
+        type: [CustomerResponseDto],
+    })
+    async search(@Query('q') query: string) {
+        const customers = await this.customersService.search(query);
         return ApiResponse.success(
             plainToInstance(CustomerResponseDto, customers),
             'Customers retrieved successfully',

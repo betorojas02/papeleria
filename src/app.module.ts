@@ -13,6 +13,7 @@ import { ProductsModule } from './modules/products/products.module';
 import { CashRegistersModule } from './modules/cash-registers/cash-registers.module';
 import { PurchasesModule } from './modules/purchases/purchases.module';
 import { SalesModule } from './modules/sales/sales.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { SalesModule } from './modules/sales/sales.module';
     CashRegistersModule,
     PurchasesModule,
     SalesModule,
+    DashboardModule,
   ],
   controllers: [],
   providers: [],
