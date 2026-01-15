@@ -2,9 +2,13 @@ import { Entity, Column, ManyToOne, JoinColumn } from 'typeorm';
 import { BaseEntity } from './base.entity';
 import { Sale } from './sale.entity';
 import { Product } from './product.entity';
+import { Service } from './service.entity';
 
 @Entity('sale_items')
 export class SaleItem extends BaseEntity {
+    @Column({ type: 'varchar', length: 20, default: 'product' })
+    itemType: 'product' | 'service';
+
     @Column()
     quantity: number;
 
@@ -21,10 +25,17 @@ export class SaleItem extends BaseEntity {
     @Column({ name: 'sale_id' })
     saleId: string;
 
-    @ManyToOne(() => Product, (product) => product.saleItems)
+    @ManyToOne(() => Product, (product) => product.saleItems, { nullable: true })
     @JoinColumn({ name: 'product_id' })
     product: Product;
 
-    @Column({ name: 'product_id' })
+    @Column({ name: 'product_id', nullable: true })
     productId: string;
+
+    @ManyToOne(() => Service, { nullable: true })
+    @JoinColumn({ name: 'service_id' })
+    service: Service;
+
+    @Column({ name: 'service_id', nullable: true })
+    serviceId: string;
 }

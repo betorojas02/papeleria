@@ -5,12 +5,32 @@ import { PaymentMethod } from '../../../database/entities/sale-payment.entity';
 
 export class SaleItemDto {
     @ApiProperty({
-        description: 'Product ID',
+        description: 'Item type: product or service',
+        enum: ['product', 'service'],
+        example: 'product',
+        default: 'product',
+    })
+    @IsEnum(['product', 'service'])
+    @IsOptional()
+    itemType?: 'product' | 'service';
+
+    @ApiProperty({
+        description: 'Product ID (required if itemType is product)',
         example: 'uuid',
+        required: false,
     })
     @IsUUID()
-    @IsNotEmpty()
-    productId: string;
+    @IsOptional()
+    productId?: string;
+
+    @ApiProperty({
+        description: 'Service ID (required if itemType is service)',
+        example: 'uuid',
+        required: false,
+    })
+    @IsUUID()
+    @IsOptional()
+    serviceId?: string;
 
     @ApiProperty({
         description: 'Quantity sold',

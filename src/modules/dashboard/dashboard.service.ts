@@ -250,4 +250,102 @@ export class DashboardService {
             );
         }
     }
+
+    /**
+     * Get top selling items (products AND services combined)
+     */
+    async getTopItems(limit: number = 10, startDate?: string, endDate?: string) {
+        try {
+            const start = startDate ? new Date(startDate) : new Date(0);
+            const end = endDate ? new Date(endDate) : new Date();
+            if (!endDate) end.setHours(23, 59, 59, 999);
+
+            // Get top products
+            const topProducts = await this.saleItemsRepository
+                .createQueryBuilder('saleItem')
+                .leftJoin('saleItem.product', 'product')
+                .leftJoin('saleItem.sale', 'sale')
+                .where('sale.createdAt BETWEEN :start AND :end', { start, end })
+                .andWhere('saleItem.itemType = :type', { type: 'product' })
+                .andWhere('product.id IS NOT NULL')
+                .select('product.id', 'id')
+                .addSelect('product.name', 'name')
+                .addSelect("'product'", 'type')
+                .addSelect('SUM(saleItem.quantity)', 'totalSold')
+                .addSelect('SUM(saleItem.quantity * saleItem.unitPrice)', 'revenue')
+                .groupBy('product.id')
+                .addGroupBy('product.name')
+                .getRawMany();
+
+            // Get top services
+            const topServices = await this.saleItemsRepository
+                .createQueryBuilder('saleItem')
+                .leftJoin('saleItem.service', 'service')
+                .leftJoin('saleItem.sale', 'sale')
+                .where('sale.createdAt BETWEEN :start AND :end', { start, end })
+                .andWhere('saleItem.itemType = :type', { type: 'service' })
+                .andWhere('service.id IS NOT NULL')
+                .select('service.id', 'id')
+                .addSelect('service.name', 'name')
+                .addSelect("'service'", 'type')
+                .addSelect('SUM(saleItem.quantity)', 'totalSold')
+                .addSelect('SUM(saleItem.quantity * saleItem.unitPrice)', 'revenue')
+                .groupBy('service.id')
+                .addGroupBy('service.name')
+                .getRawMany();
+
+            // Combine and sort by revenue
+            const allItems = [...topProducts, ...topServices]
+                .map((item) => ({
+                    id: item.id,
+                    name: item.name,
+                    type: item.type,
+                    totalSold: parseInt(item.totalSold),
+                    revenue: parseFloat(item.revenue),
+                }))
+                .sort((a, b) => b.revenue - a.revenue)
+                .slice(0, limit);
+
+            return allItems;
+        } catch (error) {
+            console.error('Error en getTopItems:', error);
+            throw new InternalServerErrorException(
+                error.message || 'Error al obtener items más vendidos'
+            );
+        }
+    }
+
+    /**
+     * Get revenue breakdown between products and services
+     */
+    async getItemsBreakdown(startDate?: string, endDate?: string) {
+        try {
+            const start = startDate ? new Date(startDate) : new Date(0);
+            const end = endDate ? new Date(endDate) : new Date();
+            if (!endDate) end.setHours(23, 59, 59, 999);
+
+            const breakdown = await this.saleItemsRepository
+                .createQueryBuilder('saleItem')
+                .leftJoin('saleItem.sale', 'sale')
+                .where('sale.createdAt BETWEEN :start AND :end', { start, end })
+                .select('saleItem.itemType', 'type')
+                .addSelect('COUNT(saleItem.id)', 'count')
+                .addSelect('SUM(saleItem.quantity)', 'totalQuantity')
+                .addSelect('SUM(saleItem.quantity * saleItem.unitPrice)', 'revenue')
+                .groupBy('saleItem.itemType')
+                .getRawMany();
+
+            return breakdown.map((item) => ({
+                type: item.type || 'product',
+                count: parseInt(item.count),
+                totalQuantity: parseInt(item.totalQuantity),
+                revenue: parseFloat(item.revenue),
+            }));
+        } catch (error) {
+            console.error('Error en getItemsBreakdown:', error);
+            throw new InternalServerErrorException(
+                error.message || 'Error al obtener desglose de items'
+            );
+        }
+    }
 }

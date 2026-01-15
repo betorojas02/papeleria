@@ -14,6 +14,7 @@ import { CashRegistersModule } from './modules/cash-registers/cash-registers.mod
 import { PurchasesModule } from './modules/purchases/purchases.module';
 import { SalesModule } from './modules/sales/sales.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { ServicesModule } from './modules/services/services.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { DashboardModule } from './modules/dashboard/dashboard.module';
     PurchasesModule,
     SalesModule,
     DashboardModule,
+    ServicesModule,
   ],
   controllers: [],
   providers: [],

@@ -82,4 +82,34 @@ export class DashboardController {
         );
         return ApiResponse.success(recentSales, 'Ventas recientes obtenidas exitosamente');
     }
+
+    @Get('top-items')
+    @ApiOperation({ summary: 'Obtener items más vendidos (productos y servicios)' })
+    @ApiQuery({ name: 'limit', required: false, type: Number })
+    @ApiQuery({ name: 'startDate', required: false })
+    @ApiQuery({ name: 'endDate', required: false })
+    async getTopItems(
+        @Query('limit') limit: string,
+        @Query('startDate') startDate?: string,
+        @Query('endDate') endDate?: string,
+    ) {
+        const topItems = await this.dashboardService.getTopItems(
+            parseInt(limit) || 10,
+            startDate,
+            endDate
+        );
+        return ApiResponse.success(topItems, 'Items más vendidos obtenidos exitosamente');
+    }
+
+    @Get('items-breakdown')
+    @ApiOperation({ summary: 'Obtener desglose de ingresos por tipo (productos vs servicios)' })
+    @ApiQuery({ name: 'startDate', required: false })
+    @ApiQuery({ name: 'endDate', required: false })
+    async getItemsBreakdown(
+        @Query('startDate') startDate?: string,
+        @Query('endDate') endDate?: string,
+    ) {
+        const breakdown = await this.dashboardService.getItemsBreakdown(startDate, endDate);
+        return ApiResponse.success(breakdown, 'Desglose de items obtenido exitosamente');
+    }
 }

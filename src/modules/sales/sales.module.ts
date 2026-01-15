@@ -6,9 +6,10 @@ import { Sale } from '../../database/entities/sale.entity';
 import { SaleItem } from '../../database/entities/sale-item.entity';
 import { SalePayment } from '../../database/entities/sale-payment.entity';
 import { Product } from '../../database/entities/product.entity';
+import { Service } from '../../database/entities/service.entity';
 
 @Module({
-    imports: [TypeOrmModule.forFeature([Sale, SaleItem, SalePayment, Product])],
+    imports: [TypeOrmModule.forFeature([Sale, SaleItem, SalePayment, Product, Service])],
     controllers: [SalesController],
     providers: [SalesService],
     exports: [SalesService],

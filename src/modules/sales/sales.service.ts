@@ -9,6 +9,7 @@ import { Sale } from '../../database/entities/sale.entity';
 import { SaleItem } from '../../database/entities/sale-item.entity';
 import { SalePayment } from '../../database/entities/sale-payment.entity';
 import { Product } from '../../database/entities/product.entity';
+import { Service } from '../../database/entities/service.entity';
 import { ResourceNotFoundException, BusinessLogicException } from '../../common/exceptions/custom.exceptions';
 
 @Injectable()
@@ -22,6 +23,8 @@ export class SalesService {
         private readonly salePaymentsRepository: Repository<SalePayment>,
         @InjectRepository(Product)
         private readonly productsRepository: Repository<Product>,
+        @InjectRepository(Service)
+        private readonly servicesRepository: Repository<Service>,
         private readonly dataSource: DataSource,
     ) { }
 
@@ -57,41 +60,75 @@ export class SalesService {
 
             const savedSale = await queryRunner.manager.save(Sale, sale);
 
-            // Crear items y reducir stock
+            // Crear items y reducir stock (solo para productos)
             for (const itemDto of createSaleDto.items) {
-                // Verificar stock disponible
-                const product = await queryRunner.manager.findOne(Product, {
-                    where: { id: itemDto.productId },
-                });
+                const itemType = itemDto.itemType || 'product';
 
-                if (!product) {
-                    throw ResourceNotFoundException.product(itemDto.productId);
-                }
+                if (itemType === 'product') {
+                    // Validar producto
+                    if (!itemDto.productId) {
+                        throw new BusinessLogicException('productId es requerido para items de tipo product');
+                    }
 
-                if (product.stock < itemDto.quantity) {
-                    throw new BusinessLogicException(
-                        `Stock insuficiente para ${product.name}. Disponible: ${product.stock}, Solicitado: ${itemDto.quantity}`,
+                    const product = await queryRunner.manager.findOne(Product, {
+                        where: { id: itemDto.productId },
+                    });
+
+                    if (!product) {
+                        throw ResourceNotFoundException.product(itemDto.productId);
+                    }
+
+                    if (product.stock < itemDto.quantity) {
+                        throw new BusinessLogicException(
+                            `Stock insuficiente para ${product.name}. Disponible: ${product.stock}, Solicitado: ${itemDto.quantity}`,
+                        );
+                    }
+
+                    // Crear item de producto
+                    const item = this.saleItemsRepository.create({
+                        saleId: savedSale.id,
+                        itemType: 'product',
+                        productId: itemDto.productId,
+                        quantity: itemDto.quantity,
+                        unitPrice: itemDto.price,
+                        subtotal: itemDto.quantity * itemDto.price,
+                    });
+
+                    await queryRunner.manager.save(SaleItem, item);
+
+                    // Reducir stock
+                    await queryRunner.manager.decrement(
+                        Product,
+                        { id: itemDto.productId },
+                        'stock',
+                        itemDto.quantity,
                     );
+                } else if (itemType === 'service') {
+                    // Validar servicio
+                    if (!itemDto.serviceId) {
+                        throw new BusinessLogicException('serviceId es requerido para items de tipo service');
+                    }
+
+                    const service = await queryRunner.manager.findOne(Service, {
+                        where: { id: itemDto.serviceId },
+                    });
+
+                    if (!service) {
+                        throw ResourceNotFoundException.model('Service', itemDto.serviceId);
+                    }
+
+                    // Crear item de servicio (sin afectar stock)
+                    const item = this.saleItemsRepository.create({
+                        saleId: savedSale.id,
+                        itemType: 'service',
+                        serviceId: itemDto.serviceId,
+                        quantity: itemDto.quantity,
+                        unitPrice: itemDto.price,
+                        subtotal: itemDto.quantity * itemDto.price,
+                    });
+
+                    await queryRunner.manager.save(SaleItem, item);
                 }
-
-                // Crear item
-                const item = this.saleItemsRepository.create({
-                    saleId: savedSale.id,
-                    productId: itemDto.productId,
-                    quantity: itemDto.quantity,
-                    unitPrice: itemDto.price,
-                    subtotal: itemDto.quantity * itemDto.price,
-                });
-
-                await queryRunner.manager.save(SaleItem, item);
-
-                // Reducir stock
-                await queryRunner.manager.decrement(
-                    Product,
-                    { id: itemDto.productId },
-                    'stock',
-                    itemDto.quantity,
-                );
             }
 
             // Crear pagos
@@ -128,6 +165,7 @@ export class SalesService {
             .leftJoinAndSelect('sale.user', 'user')
             .leftJoinAndSelect('sale.items', 'items')
             .leftJoinAndSelect('items.product', 'product')
+            .leftJoinAndSelect('items.service', 'service')
             .leftJoinAndSelect('sale.payments', 'payments')
             .orderBy('sale.createdAt', 'DESC')
             .skip(skip)
@@ -168,7 +206,7 @@ export class SalesService {
     async findOne(id: string): Promise<Sale> {
         const sale = await this.salesRepository.findOne({
             where: { id },
-            relations: ['customer', 'user', 'items', 'items.product', 'payments'],
+            relations: ['customer', 'user', 'items', 'items.product', 'items.service', 'payments'],
         });
 
         if (!sale) {
