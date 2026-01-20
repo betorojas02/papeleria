@@ -112,4 +112,24 @@ export class DashboardController {
         const breakdown = await this.dashboardService.getItemsBreakdown(startDate, endDate);
         return ApiResponse.success(breakdown, 'Desglose de items obtenido exitosamente');
     }
+
+    @Get('payment-methods')
+    @ApiOperation({ summary: 'Obtener desglose de métodos de pago' })
+    @ApiQuery({ name: 'startDate', required: false })
+    @ApiQuery({ name: 'endDate', required: false })
+    async getPaymentMethodsBreakdown(
+        @Query('startDate') startDate?: string,
+        @Query('endDate') endDate?: string,
+    ) {
+        const breakdown = await this.dashboardService.getPaymentMethodsBreakdown(startDate, endDate);
+        return ApiResponse.success(breakdown, 'Desglose de métodos de pago obtenido exitosamente');
+    }
+
+    @Get('low-stock')
+    @ApiOperation({ summary: 'Obtener productos con stock bajo' })
+    @ApiQuery({ name: 'limit', required: false, type: Number })
+    async getLowStockProducts(@Query('limit') limit: string) {
+        const products = await this.dashboardService.getLowStockProducts(parseInt(limit) || 10);
+        return ApiResponse.success(products, 'Productos con stock bajo obtenidos exitosamente');
+    }
 }

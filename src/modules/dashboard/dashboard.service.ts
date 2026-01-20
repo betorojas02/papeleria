@@ -350,4 +350,68 @@ export class DashboardService {
             );
         }
     }
+
+    /**
+     * Get payment methods breakdown
+     */
+    async getPaymentMethodsBreakdown(startDate?: string, endDate?: string) {
+        try {
+            const start = startDate ? fromZonedTime(`${startDate} 00:00:00`, APP_TIMEZONE) : new Date(0);
+            const end = endDate ? fromZonedTime(`${endDate} 23:59:59.999`, APP_TIMEZONE) : new Date();
+
+            const breakdown = await this.salesRepository
+                .createQueryBuilder('sale')
+                .leftJoin('sale.payments', 'payment')
+                .where('sale.createdAt BETWEEN :start AND :end', { start, end })
+                .select('payment.paymentMethod', 'method')
+                .addSelect('COUNT(payment.id)', 'count')
+                .addSelect('SUM(payment.amount)', 'total')
+                .groupBy('payment.paymentMethod')
+                .orderBy('SUM(payment.amount)', 'DESC')
+                .getRawMany();
+
+            return breakdown.map((item) => ({
+                method: item.method || 'cash',
+                count: parseInt(item.count),
+                total: parseFloat(item.total),
+            }));
+        } catch (error) {
+            console.error('Error en getPaymentMethodsBreakdown:', error);
+            throw new InternalServerErrorException(
+                error.message || 'Error al obtener desglose de métodos de pago'
+            );
+        }
+    }
+
+    /**
+     * Get low stock products (critical alerts)
+     */
+    async getLowStockProducts(limit: number = 10) {
+        try {
+            const products = await this.productsRepository.find({
+                where: {
+                    isActive: true,
+                },
+                order: {
+                    stock: 'ASC',
+                },
+                take: limit,
+            });
+
+            return products
+                .filter(p => p.stock <= 10)
+                .map(p => ({
+                    id: p.id,
+                    name: p.name,
+                    stock: p.stock,
+                    minStock: p.minStock || 5,
+                    price: p.price,
+                }));
+        } catch (error) {
+            console.error('Error en getLowStockProducts:', error);
+            throw new InternalServerErrorException(
+                error.message || 'Error al obtener productos con stock bajo'
+            );
+        }
+    }
 }
